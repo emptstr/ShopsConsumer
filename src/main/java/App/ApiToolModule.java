@@ -3,7 +3,8 @@ package App;
 import com.google.inject.AbstractModule;
 
 /**
- * Created by jordan on 5/29/17.
+ * @author Jordan Gaston
+ * @version 0.1.17
  */
 public class ApiToolModule extends AbstractModule {
 

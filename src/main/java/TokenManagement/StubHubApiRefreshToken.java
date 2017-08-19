@@ -7,21 +7,11 @@ import java.io.Serializable;
 /**
  * Created by jordan on 6/13/17.
  */
-public class StubHubApiRefreshToken implements Serializable {
+public class StubHubApiRefreshToken extends StubHubApiToken {
 
-    private final String refreshTokenString;
-    private final StubHubApiScope scope;
 
     public StubHubApiRefreshToken(final String refreshToken, StubHubApiScope scope) {
-        this.refreshTokenString = refreshToken;
-        this.scope = scope;
+        super(refreshToken, scope);
     }
 
-    public String getRefreshTokenString() {
-        return refreshTokenString;
-    }
-
-    public boolean isProd() {
-        return scope.equals(StubHubApiScope.PROD);
-    }
 }

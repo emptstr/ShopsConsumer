@@ -1,9 +1,6 @@
 package TokenManagement;
 
 import App.StubHubApiScope;
-import TokenManagement.StubHubApiRefreshToken;
-import TokenManagement.TokenManager;
-import TokenManagement.TokenManagerImpl;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.LocalDateTime;
 import org.junit.Before;
@@ -19,7 +16,8 @@ import java.io.ObjectOutputStream;
 import static org.junit.Assert.*;
 
 /**
- * Created by jordan on 6/13/17.
+ * @author Jordan Gaston
+ * @version 0.1.17
  */
 @RunWith(MockitoJUnitRunner.class)
 public class TokenManagerImplTest {
@@ -54,7 +52,7 @@ public class TokenManagerImplTest {
 
         StubHubApiAccessToken result = tokenManager.getAccessToken(StubHubApiScope.PROD);
 
-        assertEquals(result.getAccessTokenString(), accessToken.getAccessTokenString());
+        assertEquals(result.getTokenString(), accessToken.getTokenString());
         assertEquals(result.getSecondsToExpr(), accessToken.getSecondsToExpr());
         assertEquals(result.isProd(), accessToken.isProd());
     }
@@ -71,7 +69,7 @@ public class TokenManagerImplTest {
 
         StubHubApiAccessToken result = tokenManager.getAccessToken(StubHubApiScope.SANDBOX);
 
-        assertEquals(result.getAccessTokenString(), accessToken.getAccessTokenString());
+        assertEquals(result.getTokenString(), accessToken.getTokenString());
         assertEquals(result.getSecondsToExpr(), accessToken.getSecondsToExpr());
         assertEquals(result.isProd(), accessToken.isProd());
     }
@@ -103,7 +101,7 @@ public class TokenManagerImplTest {
 
         StubHubApiRefreshToken result = tokenManager.getRefreshToken(StubHubApiScope.PROD);
 
-        assertEquals(result.getRefreshTokenString(), refreshToken.getRefreshTokenString());
+        assertEquals(result.getTokenString(), refreshToken.getTokenString());
         assertEquals(result.isProd(), refreshToken.isProd());
     }
 
@@ -120,7 +118,7 @@ public class TokenManagerImplTest {
 
         StubHubApiRefreshToken result = tokenManager.getRefreshToken(StubHubApiScope.SANDBOX);
 
-        assertEquals(result.getRefreshTokenString(), refreshToken.getRefreshTokenString());
+        assertEquals(result.getTokenString(), refreshToken.getTokenString());
         assertEquals(result.isProd(), refreshToken.isProd());
     }
 
@@ -161,13 +159,13 @@ public class TokenManagerImplTest {
         StubHubApiAccessToken accessToken = new StubHubApiAccessToken(ACCESS_TOKEN_STRING, accessTokenTime, StubHubApiScope.PROD );
         StubHubApiRefreshToken refreshToken = new StubHubApiRefreshToken(REFRESH_TOKEN_STRING, StubHubApiScope.PROD);
 
-        StubHubApiAccessToken resultAccessToken = tokenManager.createToken(ACCESS_TOKEN_STRING, REFRESH_TOKEN_STRING, seconds_to_exr, StubHubApiScope.PROD);
+        StubHubApiAccessToken resultAccessToken = tokenManager.createTokens(ACCESS_TOKEN_STRING, REFRESH_TOKEN_STRING, seconds_to_exr, StubHubApiScope.PROD);
         StubHubApiRefreshToken resultRefreshToken = tokenManager.getRefreshToken(StubHubApiScope.PROD);
 
-        assertEquals(resultRefreshToken.getRefreshTokenString(), refreshToken.getRefreshTokenString());
+        assertEquals(resultRefreshToken.getTokenString(), refreshToken.getTokenString());
         assertEquals(resultRefreshToken.isProd(), refreshToken.isProd());
 
-        assertEquals(resultAccessToken.getAccessTokenString(), accessToken.getAccessTokenString());
+        assertEquals(resultAccessToken.getTokenString(), accessToken.getTokenString());
         assertEquals(resultAccessToken.getSecondsToExpr(), accessToken.getSecondsToExpr());
         assertEquals(resultAccessToken.isProd(), accessToken.isProd());
 

@@ -4,11 +4,18 @@ import App.StubHubApiScope;
 import org.joda.time.LocalDateTime;
 
 import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Created by jordan on 6/13/17.
+ * TokenManagerImpl
+ *
+ * @author Jordan Gaston
+ * @version 0.1.17
  */
-public class TokenManagerImpl implements TokenManager {
+public class TokenManagerImpl extends TokenManager {
+
+    private static final Logger logger = Logger.getLogger(TokenManagerImpl.class.getName());
 
     private static final String SAND_BOX_ACCESS_TOKEN_PATH = "../../resources.sb_at.ser";
     private static final String SAND_BOX_REFRESH_TOKEN_PATH = "../../resources.sb_rt.ser";
@@ -19,8 +26,9 @@ public class TokenManagerImpl implements TokenManager {
     private StubHubApiRefreshToken refreshToken;
     private StubHubApiAccessToken accessToken;
 
-    public StubHubApiAccessToken getAccessToken(StubHubApiScope scope) {
-
+    @Override
+    public StubHubApiAccessToken getAccessToken(final StubHubApiScope scope) {
+        logger.log(Level.INFO, "Started retrieving access token with scope: " + scope.toString());
         if (accessToken == null) {
             try {
                 File tokenFile;
@@ -33,6 +41,7 @@ public class TokenManagerImpl implements TokenManager {
                 }
 
                 if (!tokenFile.exists()) {
+                    logger.log(Level.INFO, "No existing access token");
                     return null;
                 }
 
@@ -40,27 +49,31 @@ public class TokenManagerImpl implements TokenManager {
                 this.accessToken = (StubHubApiAccessToken) objectIn.readObject();
 
             } catch (Exception e) {
-                throw new RuntimeException("An error occured while reading the access token file", e);
+                throw new RuntimeException("Failed while reading the access token file", e);
             }
 
         }
+        logger.log(Level.INFO, "Finished retrieving access token with scope: " + scope.toString());
         return accessToken;
     }
 
-    public boolean isExpired(StubHubApiAccessToken accessToken) {
-        return accessToken.getSecondsToExpr().compareTo(LocalDateTime.now().plusDays(1)) <= 0 ;
+    @Override
+    public boolean isExpired(final StubHubApiAccessToken accessToken) {
+        return accessToken.getSecondsToExpr().compareTo(LocalDateTime.now().plusDays(1)) <= 0;
     }
 
-    public StubHubApiAccessToken createToken(String accessTokenString, String refreshTokenString, int secondsTillTokenExp, StubHubApiScope scope) {
-
+    @Override
+    public StubHubApiAccessToken createTokens(final String accessTokenString, final String refreshTokenString,
+                                              final int secondsTillTokenExp, final StubHubApiScope tokenScope) {
+        logger.log(Level.INFO, "Started creating access tokens with scope: " + tokenScope.toString());
         try {
 
-            StubHubApiAccessToken accessToken = new StubHubApiAccessToken(accessTokenString, LocalDateTime.now().plusSeconds(secondsTillTokenExp), scope);
-            StubHubApiRefreshToken refreshToken = new StubHubApiRefreshToken(refreshTokenString, scope);
+            StubHubApiAccessToken accessToken = new StubHubApiAccessToken(accessTokenString, LocalDateTime.now().plusSeconds(secondsTillTokenExp), tokenScope);
+            StubHubApiRefreshToken refreshToken = new StubHubApiRefreshToken(refreshTokenString, tokenScope);
 
             File accessTokenFile, refreshTokenFile;
 
-            if (scope.equals(StubHubApiScope.PROD)) {
+            if (tokenScope.equals(StubHubApiScope.PROD)) {
                 accessTokenFile = new File(PROD_ACCESS_TOKEN_PATH);
                 refreshTokenFile = new File(PROD_REFRESH_TOKEN_PATH);
             } else {
@@ -76,15 +89,16 @@ public class TokenManagerImpl implements TokenManager {
 
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
-
+            logger.log(Level.INFO, "Finished creating tokens with scope: " + tokenScope.toString());
             return accessToken;
-        }catch (IOException e){
-            throw new RuntimeException("An error occurred while saving the created tokens",e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed while saving the created tokens", e);
         }
     }
 
-    public StubHubApiRefreshToken getRefreshToken(StubHubApiScope scope) {
-
+    @Override
+    public StubHubApiRefreshToken getRefreshToken(final StubHubApiScope scope) {
+        logger.log(Level.INFO, "Started retrieving access token with scope: " + scope.toString());
         if (refreshToken == null) {
             try {
                 File tokenFile;
@@ -104,9 +118,10 @@ public class TokenManagerImpl implements TokenManager {
                 this.refreshToken = (StubHubApiRefreshToken) objectIn.readObject();
 
             } catch (Exception e) {
-                throw new RuntimeException("An error occured while reading the access token file", e);
+                throw new RuntimeException("An error occurred while reading the access token file", e);
             }
         }
+        logger.log(Level.INFO, "Finished retrieving refresh token with scope: " + scope.toString());
         return refreshToken;
     }
 

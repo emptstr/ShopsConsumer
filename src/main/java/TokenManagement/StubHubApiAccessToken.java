@@ -12,27 +12,17 @@ import java.io.Serializable;
  * - can be Sandbox or Production Scope
  * - expires 6 month's after being issued
  */
-public class StubHubApiAccessToken implements Serializable{
+public class StubHubApiAccessToken extends StubHubApiToken{
 
-    private final String accessTokenString;
     private final LocalDateTime secondsTooExpr;
-    private final StubHubApiScope scope;
 
     public StubHubApiAccessToken(final String accessTokenString, final LocalDateTime secondsTooExpr, final StubHubApiScope scope) {
-        this.accessTokenString = accessTokenString;
+        super(accessTokenString, scope);
         this.secondsTooExpr = secondsTooExpr;
-        this.scope = scope;
-    }
-
-    public String getAccessTokenString() {
-        return accessTokenString;
     }
 
     public LocalDateTime getSecondsToExpr() {
         return secondsTooExpr;
     }
 
-    public boolean isProd() {
-        return scope.equals(StubHubApiScope.PROD);
-    }
 }

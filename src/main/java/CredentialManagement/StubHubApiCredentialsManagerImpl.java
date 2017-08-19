@@ -7,9 +7,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 
-public class StubHubApiCredentialsManagerImpl implements StubHubApiCredentialsManager {
+public class StubHubApiCredentialsManagerImpl extends StubHubApiCredentialsManager {
+
+    private static final Logger logger = Logger.getLogger(StubHubApiCredentialsManagerImpl.class.getName());
 
     private static final String SAND_CONSUMER_KEY_STR = "SandConsumerKey";
     private static final String SAND_SECRET_KEY_STR = "SandSecretKey";

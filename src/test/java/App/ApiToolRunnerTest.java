@@ -2,10 +2,8 @@ package App;
 
 import CredentialManagement.StubHubApiCredentials;
 import CredentialManagement.StubHubApiCredentialsManager;
-import EventManagement.EventUpdateManager;
 import EventManagement.StubHubEvent;
-import ListingManagement.ListingUpdateManager;
-import LoginManagement.LoginManager;
+import LoginManagement.StubHubApiLoginManager;
 import LoginManagement.StubHubApiLoginResult;
 import TokenManagement.StubHubApiAccessToken;
 import TokenManagement.StubHubApiRefreshToken;
@@ -46,11 +44,9 @@ public class ApiToolRunnerTest {
     @Mock
     private TokenManager tokenManager;
     @Mock
-    private LoginManager loginManager;
+    private StubHubApiLoginManager loginManager;
     @Mock
-    private EventUpdateManager eventManager;
-    @Mock
-    private ListingUpdateManager listingManager;
+    private StubHubActiveRecordUpdateManager activeRecordUpdateManager;
 
     @Mock //TODO create actual events when the pojo is defined
     private StubHubEvent firstEvent, secondEvent;
@@ -68,6 +64,7 @@ public class ApiToolRunnerTest {
     @Mock
     private StubHubApiLoginResult loginResult;
 
+
     @Before
     public void setUp() {
 
@@ -83,7 +80,7 @@ public class ApiToolRunnerTest {
 
         refreshToken = new StubHubApiRefreshToken(REFRESH_TOKEN, scope_4);
 
-        toolRunner = new ApiToolRunner(tokenManager, credentialsManager, loginManager, eventManager, listingManager);
+        toolRunner = new ApiToolRunner(tokenManager, credentialsManager, loginManager, activeRecordUpdateManager);
     }
 
     @Test
@@ -109,7 +106,7 @@ public class ApiToolRunnerTest {
         when(loginResult.getAccessTokenString()).thenReturn(ACCESS_TOKEN_1);
         when(loginResult.getRefreshTokenString()).thenReturn(REFRESH_TOKEN);
         when(loginResult.getSecondsToExp()).thenReturn(SECONDS_TILL_TOKEN_EXP_1);
-        when(tokenManager.createToken(ACCESS_TOKEN_1, REFRESH_TOKEN, SECONDS_TILL_TOKEN_EXP_2, scope_2)).thenReturn(accessToken_2);
+        when(tokenManager.createTokens(ACCESS_TOKEN_1, REFRESH_TOKEN, SECONDS_TILL_TOKEN_EXP_2, scope_2)).thenReturn(accessToken_2);
         testWorkflow(accessToken_2);
     }
 
@@ -128,7 +125,7 @@ public class ApiToolRunnerTest {
         when(loginResult.getAccessTokenString()).thenReturn(ACCESS_TOKEN_4);
         when(loginResult.getRefreshTokenString()).thenReturn(REFRESH_TOKEN);
         when(loginResult.getSecondsToExp()).thenReturn(SECONDS_TILL_TOKEN_EXP_4);
-        when(tokenManager.createToken(ACCESS_TOKEN_4, REFRESH_TOKEN, SECONDS_TILL_TOKEN_EXP_4, scope_4)).thenReturn(accessToken_4);
+        when(tokenManager.createTokens(ACCESS_TOKEN_4, REFRESH_TOKEN, SECONDS_TILL_TOKEN_EXP_4, scope_4)).thenReturn(accessToken_4);
         testWorkflow(accessToken_4);
     }
 
@@ -139,8 +136,7 @@ public class ApiToolRunnerTest {
     }
 
     private void testWorkflow(final StubHubApiAccessToken accessToken) {
-        when(eventManager.update(accessToken)).thenReturn(events);
         toolRunner.run();
-        verify(listingManager).update(accessToken, events);
+        verify(activeRecordUpdateManager).update(accessToken);
     }
 }
