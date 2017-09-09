@@ -10,8 +10,6 @@ import java.util.List;
  */
 public abstract class EventApiAccessor {
 
-    public abstract Integer getNumEvents(final StubHubApiToken accessToken);
-
     public abstract List<StubHubEvent> getEvents(final StubHubApiToken accessToken, final int rowStart, final int eventsPerRequest);
 
 }

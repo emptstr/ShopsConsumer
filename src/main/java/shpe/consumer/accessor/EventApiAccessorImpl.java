@@ -33,15 +33,6 @@ public class EventApiAccessorImpl extends EventApiAccessor {
         this.eventArrayDeserializer = eventArrayDeserializer;
     }
 
-    public Integer getNumEvents(StubHubApiToken accessToken) {
-        WebTarget numEventsTarget = eventApiClient.target(NUM_EVENT_TARGET);
-        Invocation.Builder numFoundBuilder = numEventsTarget.request();
-        numFoundBuilder.header(HttpHeaders.ACCEPT_ENCODING, MediaType.APPLICATION_JSON);
-        numFoundBuilder.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON);
-        numFoundBuilder.header(HttpHeaders.AUTHORIZATION, String.format(AUTH_HEADER_FORMAT_STRING, accessToken.getTokenString()));
-        Invocation numFoundInvocation = numFoundBuilder.buildGet();
-        return numFoundInvocation.invoke(Integer.class);
-    }
 
     public List<StubHubEvent> getEvents(StubHubApiToken accessToken, int rowStart1, int eventsPerRequest) {
         String eventRequestTarget = String.format(EVENT_TARGET_FORMAT_STRING, rowStart1, eventsPerRequest);

@@ -1,73 +1,124 @@
 package shpe.consumer.controller;
 
-import shpe.consumer.accessor.EventApiAccessorImpl;
-import shpe.util.Timer;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import shpe.consumer.accessor.EventApiAccessor;
 import shpe.consumer.model.StubHubApiToken;
 import shpe.consumer.model.StubHubEvent;
-import shpe.util.IndexList;
-import shpe.util.IndexListFactory;
 import shpe.util.Sleeper;
+import shpe.util.SleeperImpl;
+import shpe.util.Timer;
+import shpe.util.TimerImpl;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Optional;
 
-/**
- * Created by jordan on 6/22/17.
- */
+@RequiredArgsConstructor
 public class EventUpdateControllerImpl extends EventUpdateController {
 
-    private static final int EXPECTED_MODIFIED_COUNT = 100000; //TODO make these configurable or set via constructor
+    private static final Logger logger = LoggerFactory.getLogger(EventUpdateControllerImpl.class);
     private static final int SECONDS_IN_MINUTE = 60;
-    private static final int MAX_EVENTS_PER_REQUEST = 2;
-    private static final int MAX_REQUESTS_PER_MINUTE = 1;
 
-    private final EventApiAccessorImpl eventRetriever;
-    private final Timer timer;
+    private final EventApiAccessor eventRetriever;
+    private final Timer timeoutTimer;
+    private final Timer requestTimer;
     private final Sleeper threadSleeper;
-    private final IndexListFactory indexListFactory;
-
-    public EventUpdateControllerImpl(final EventApiAccessorImpl eventRetriever,
-                                     final Timer timer, final Sleeper threadSleeper, final IndexListFactory indexListFactory) {
+    private final int maxEventsPerRequest;
+    private final int maxRequestsPerMinute;
+    private final int timeoutDurationInSeconds;
+    /// metrics below
+    private final Histogram timeSpentSleepingMetric, requestFailureRatioMetric;
+    /**
+     * Production Constructor
+     * @param eventRetriever
+     * @param maxEventsPerRequest
+     * @param maxRequestsPerMinute
+     * @param timeoutDurationInSeconds
+     */
+    public EventUpdateControllerImpl(EventApiAccessor eventRetriever, int maxEventsPerRequest, int maxRequestsPerMinute, int timeoutDurationInSeconds, MetricRegistry metricRegistry){
         this.eventRetriever = eventRetriever;
-        this.timer = timer;
-        this.threadSleeper = threadSleeper;
-        this.indexListFactory = indexListFactory;
+        this.maxEventsPerRequest = maxEventsPerRequest;
+        this.maxRequestsPerMinute = maxRequestsPerMinute;
+        this.timeoutDurationInSeconds = timeoutDurationInSeconds;
+        this.timeoutTimer = new TimerImpl();
+        this.requestTimer = new TimerImpl();
+        this.threadSleeper = new SleeperImpl();
+        this.timeSpentSleepingMetric = metricRegistry.histogram("EVENT_API_TIME_SPENT_SLEEPING");
+        this.requestFailureRatioMetric = metricRegistry.histogram("EVENT_API_REQUEST_FAILURE_RATIO");
     }
 
     public Collection<StubHubEvent> update(StubHubApiToken accessToken) {
-        try {
-            int numEvents = eventRetriever.getNumEvents(accessToken);
-            IndexList indexList = indexListFactory.getInstance(numEvents, MAX_EVENTS_PER_REQUEST, false);
-            Iterator<Integer> indexListIterator = indexList.iterator();
-
-            Collection<StubHubEvent> modifiedEvents = new ArrayList<StubHubEvent>(EXPECTED_MODIFIED_COUNT);
             int requestsInMinute = 0;
-            timer.start();
+            int eventsInLastRequest = Integer.MAX_VALUE;
+            int requestRowStart = 0;
 
-            while (indexListIterator.hasNext()) {
+            requestTimer.start();
+            timeoutTimer.start();
+            Collection<StubHubEvent> modifiedEvents = new LinkedList<>();
 
-                long elapsedSeconds = timer.getElapsedSecs();
-
-                if (elapsedSeconds < SECONDS_IN_MINUTE) {
-                    if (requestsInMinute >= MAX_REQUESTS_PER_MINUTE) {
-                        threadSleeper.sleep((SECONDS_IN_MINUTE - elapsedSeconds + 1) * 1000);
-                        timer.reset();
+            do {
+                if (isMinuteElapsed()) {
+                    if (isMaxRequestsPerMinuteReached(requestsInMinute)) {
+                        long sleepTime = getSleepTime();
+                        timeSpentSleepingMetric.update(sleepTime);
+                        threadSleeper.sleep(sleepTime);
+                        requestTimer.reset();
                         requestsInMinute = 0;
                     }
                 } else {
-                    timer.reset();
+                    requestTimer.reset();
                     requestsInMinute = 0;
                 }
-
-                modifiedEvents.addAll(eventRetriever.getEvents(accessToken, indexListIterator.next(), MAX_EVENTS_PER_REQUEST));
+                retrieveEvents(accessToken, requestRowStart);
+                Optional<Collection<StubHubEvent>> requestResult = retrieveEvents(accessToken, requestRowStart);
+                if(requestResult.isPresent()) {
+                    Collection<StubHubEvent> retrievedEvents = requestResult.get();
+                    modifiedEvents.addAll(retrievedEvents);
+                    eventsInLastRequest = retrievedEvents.size();
+                }
+                requestRowStart += maxEventsPerRequest;
                 requestsInMinute++;
-            }
+
+            }while(isMoreEventsAvailable(eventsInLastRequest) && isTimeOutDurationReached());
 
             return  modifiedEvents;
+    }
 
-        } catch (Exception e) {
-            throw new RuntimeException("Failed with Exception: \n", e);
+    private Optional<Collection<StubHubEvent>> retrieveEvents(StubHubApiToken accessToken, int requestRowStart) {
+        try {
+          Optional<Collection<StubHubEvent>> events = Optional.of(eventRetriever.getEvents(accessToken
+                  , requestRowStart, maxEventsPerRequest));
+          requestFailureRatioMetric.update(0);
+          return events;
+        }catch(Exception e){
+            logger.warn(String.format("Request failed at row :%d ",requestRowStart));
+            requestFailureRatioMetric.update(1);
+            // fail silently
         }
+        return Optional.empty();
+    }
+
+    private boolean isTimeOutDurationReached() {
+        return timeoutDurationInSeconds > timeoutTimer.getElapsedSecs();
+    }
+
+    private boolean isMoreEventsAvailable(int eventsInLastRequest) {
+        return eventsInLastRequest >= maxEventsPerRequest;
+    }
+
+    private boolean isMaxRequestsPerMinuteReached(int requestsInMinute) {
+        return requestsInMinute >= maxRequestsPerMinute;
+    }
+
+    private long getSleepTime() {
+        return (SECONDS_IN_MINUTE - requestTimer.getElapsedSecs() + 1) * 1000;
+    }
+
+    private boolean isMinuteElapsed() {
+        return requestTimer.getElapsedSecs() < SECONDS_IN_MINUTE;
     }
 }

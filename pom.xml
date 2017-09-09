@@ -113,8 +113,24 @@
             <artifactId>jets3t</artifactId>
             <version>0.9.4</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>DynamoDBLocal</artifactId>
+            <version>[1.11,2.0)</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-dynamodb</artifactId>
+            <version>1.11.66</version>
+        </dependency>
     </dependencies>
     <repositories>
-
+        <!--Custom repository:-->
+            <repository>
+                <id>dynamodb-local-oregon</id>
+                <name>DynamoDB Local Release Repository</name>
+                <url>https://s3-us-west-2.amazonaws.com/dynamodb-local/release</url>
+            </repository>
     </repositories>
 </project>

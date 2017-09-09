@@ -83,21 +83,6 @@ public class EventApiAccessorTest {
     }
 
     @Test
-    public void testGetNumEvents() throws Exception {
-        when(client.target(NUM_EVENT_TARGET)).thenReturn(eventApiTarget);
-        when(eventApiTarget.request()).thenReturn(eventApiRequestBuilder);
-        when(eventApiRequestBuilder.buildGet()).thenReturn(numFoundInvocation);
-        when(numFoundInvocation.invoke(Integer.class)).thenReturn(NUM_EVENTS_FOUND);
-
-        Integer numEventsFound = activeEventUpdateManager.getNumEvents(accessToken);
-
-        verify(eventApiRequestBuilder).header(HttpHeaders.ACCEPT_ENCODING, MediaType.APPLICATION_JSON);
-        verify(eventApiRequestBuilder).header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON);
-        verify(eventApiRequestBuilder).header(HttpHeaders.AUTHORIZATION, String.format(AUTH_HEADER_FORMAT_STRING, accessToken.getTokenString()));
-        assertEquals(numEventsFound, NUM_EVENTS_FOUND);
-    }
-
-    @Test
     public void testGetEvents() throws Exception {
         String eventRequestString1 = String.format(EVENT_TARGET_FORMAT_STRING, ROW_START_1, NUM_ROWS);
         when(client.target(eventRequestString1)).thenReturn(eventApiTarget);

@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import shpe.consumer.controller.EventListingUpdateControllerImpl;
 import shpe.consumer.factory.StubHubListingCollectionFactory;
 import shpe.util.Sleeper;
 import shpe.util.Timer;
@@ -19,6 +18,7 @@ import shpe.util.Timer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
@@ -39,7 +39,7 @@ public class EventListingUpdateControllerImplTest {
     private StubHubListingCollectionFactory listingCollectionFactory;
     private DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.basicDate();
     @Mock
-    private Timer timer;
+    private Timer requestTimer, timeoutTimer;
     @Mock
     private Sleeper threadSleeper;
     @Mock
@@ -79,15 +79,15 @@ public class EventListingUpdateControllerImplTest {
 
         event1ListingCollection = new StubHubListingCollection(dateOfListingRetrievals, allEvent1Listings);
         event2ListingCollection = new StubHubListingCollection(dateOfListingRetrievals, allEvent2Listings);
-        event3ListingCollection = new StubHubListingCollection(dateOfListingRetrievals, Arrays.asList());
+        event3ListingCollection = new StubHubListingCollection(dateOfListingRetrievals, Collections.emptyList());
     }
 
     @Test
-    public void shouldUpdateActingListings() throws Exception {
+    public void shouldUpdateActiveListings() throws Exception {
 
         activeListingUpdateManager = new EventListingUpdateControllerImpl(activeListingRetriever,
-                listingCollectionFactory, timer, threadSleeper, dateTimeFormatter
-                ,MAX_LISTINGS_PER_REQUEST, MAX_REQUESTS_IN_MINUTE);
+                listingCollectionFactory, requestTimer, timeoutTimer, threadSleeper, dateTimeFormatter
+                ,MAX_LISTINGS_PER_REQUEST, MAX_REQUESTS_IN_MINUTE, 10, null, null);
 
         when(event1.getEventID()).thenReturn(eventId1);
         when(event2.getEventID()).thenReturn(eventId2);
@@ -98,7 +98,8 @@ public class EventListingUpdateControllerImplTest {
         when(activeListingRetriever.retrieve(accessToken, eventId3, ROW_START_1, MAX_LISTINGS_PER_REQUEST)).thenReturn(event3Listings1);
         when(listingCollectionFactory.create(allEvent1Listings, dateOfListingRetrievals)).thenReturn(event1ListingCollection);
         when(listingCollectionFactory.create(allEvent2Listings, dateOfListingRetrievals)).thenReturn(event2ListingCollection);
-        when(timer.getElapsedSecs()).thenReturn(30L).thenReturn(55L).thenReturn(59L).thenReturn(5L);
+        when(requestTimer.getElapsedSecs()).thenReturn(30L).thenReturn(55L).thenReturn(59L).thenReturn(5L);
+        when(timeoutTimer.getElapsedSecs()).thenReturn(1L).thenReturn(1L).thenReturn(1L);
 
         Collection<StubHubEvent> returnedEvents = activeListingUpdateManager.update(accessToken, eventsToRetrieveListingsFor);
 
@@ -107,7 +108,36 @@ public class EventListingUpdateControllerImplTest {
         verify(event3, never()).addUpdatedListings(event3ListingCollection);
         assertTrue(returnedEvents.containsAll(Arrays.asList(event1, event2, event3)));
         verify(threadSleeper).sleep(2000L);
-        verify(timer, times(1)).start();
-        verify(timer, times(1)).reset();
+        verify(requestTimer, times(1)).start();
+        verify(requestTimer, times(1)).reset();
+    }
+
+    @Test
+    public void shouldUpdateActiveListingsWithTimeout() {
+        activeListingUpdateManager = new EventListingUpdateControllerImpl(activeListingRetriever,
+                listingCollectionFactory, requestTimer, timeoutTimer, threadSleeper, dateTimeFormatter
+                ,MAX_LISTINGS_PER_REQUEST, MAX_REQUESTS_IN_MINUTE, 10, null, null);
+
+        when(event1.getEventID()).thenReturn(eventId1);
+        when(event2.getEventID()).thenReturn(eventId2);
+        when(event3.getEventID()).thenReturn(eventId3);
+        when(activeListingRetriever.retrieve(accessToken, eventId1, ROW_START_1, MAX_LISTINGS_PER_REQUEST)).thenReturn(event1Listings1);
+        when(activeListingRetriever.retrieve(accessToken,eventId1, ROW_START_2, MAX_LISTINGS_PER_REQUEST)).thenReturn(event1Listings2);
+        when(activeListingRetriever.retrieve(accessToken, eventId2, ROW_START_1, MAX_LISTINGS_PER_REQUEST)).thenReturn(event2Listings1);
+        when(listingCollectionFactory.create(allEvent1Listings, dateOfListingRetrievals)).thenReturn(event1ListingCollection);
+        when(listingCollectionFactory.create(allEvent2Listings, dateOfListingRetrievals)).thenReturn(event2ListingCollection);
+        when(requestTimer.getElapsedSecs()).thenReturn(30L).thenReturn(55L).thenReturn(59L).thenReturn(5L);
+        when(timeoutTimer.getElapsedSecs()).thenReturn(1L).thenReturn(10L);
+
+        Collection<StubHubEvent> returnedEvents = activeListingUpdateManager.update(accessToken, eventsToRetrieveListingsFor);
+
+        verify(activeListingRetriever, never()).retrieve(accessToken, eventId3, ROW_START_1, MAX_LISTINGS_PER_REQUEST);
+        verify(event1).addUpdatedListings(event1ListingCollection);
+        verify(event2).addUpdatedListings(event2ListingCollection);
+        verify(event3, never()).addUpdatedListings(event3ListingCollection);
+        assertTrue(returnedEvents.containsAll(Arrays.asList(event1, event2)));
+        verify(threadSleeper).sleep(2000L);
+        verify(requestTimer, times(1)).start();
+        verify(requestTimer, times(1)).reset();
     }
 }
