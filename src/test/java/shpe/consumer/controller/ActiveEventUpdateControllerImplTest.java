@@ -1,5 +1,6 @@
 package shpe.consumer.controller;
 
+import com.codahale.metrics.MetricRegistry;
 import org.joda.time.LocalDateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +46,7 @@ public class ActiveEventUpdateControllerImplTest {
      * and subsequently pass the resulting eventID's to the ActiveListingUpdateManager
      */
     public void testUpdate(){
-        activeRecordUpdateManager = new ActiveEventUpdateControllerImpl(activeEventUpdateManager, activeListingUpdateManager, eventDao);
+        activeRecordUpdateManager = new ActiveEventUpdateControllerImpl(activeEventUpdateManager, activeListingUpdateManager, eventDao, new MetricRegistry());
 
         accessToken = new StubHubApiToken(ACCESS_TOKEN_STRING, SECONDS_TO_EXPR);
         when(activeEventUpdateManager.update(accessToken)).thenReturn(Arrays.asList(event1, event2));

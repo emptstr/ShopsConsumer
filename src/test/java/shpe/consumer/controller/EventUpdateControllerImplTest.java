@@ -1,5 +1,6 @@
 package shpe.consumer.controller;
 
+import com.codahale.metrics.MetricRegistry;
 import org.joda.time.LocalDateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +24,6 @@ import static shpe.consumer.model.StubHubEvent.*;
 
 /**
  * Created by jordan on 6/22/17.x
- *
  */
 @RunWith(MockitoJUnitRunner.class)
 public class EventUpdateControllerImplTest {
@@ -51,13 +51,15 @@ public class EventUpdateControllerImplTest {
     @Mock
     StubHubAncestors ancestor1, ancestor2, ancestor3;
 
+    MetricRegistry metricRegistry = new MetricRegistry();
+
     private StubHubApiToken accessToken;
     private List<StubHubEvent> eventList_1, eventList_2;
     private StubHubEvent event_1, event_2, event_3;
     private StubHubEventID event_id_1, event_id_2, event_id_3;
 
     @Before
-    public void setup(){
+    public void setup() {
         accessToken = new StubHubApiToken(ACCESS_TOKEN_STRING, SECONDS_T0_EXP);
         event_id_1 = new StubHubEventID(EVENT_ID_1);
         event_id_2 = new StubHubEventID(EVENT_ID_2);
@@ -69,7 +71,8 @@ public class EventUpdateControllerImplTest {
         eventList_2 = Arrays.asList(event_3);
 
         activeEventUpdateManager = new EventUpdateControllerImpl(eventRetriever, timeoutTimer,
-                requestTimer, threadSleeper, MAX_EVENTS_PER_REQUEST, MAX_REQUESTS_PER_MINUTE, 10);
+                requestTimer, threadSleeper, MAX_EVENTS_PER_REQUEST, MAX_REQUESTS_PER_MINUTE, 10, metricRegistry.histogram("test"),
+                metricRegistry.histogram("test"));
     }
 
     @Test

@@ -1,5 +1,7 @@
 package shpe.consumer.controller;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import shpe.consumer.accessor.ListingApiAccessor;
 import shpe.consumer.model.*;
 import org.joda.time.DateTime;
@@ -47,6 +49,8 @@ public class EventListingUpdateControllerImplTest {
     @Mock
     private StubHubListing listing1, listing2, listing3, listing4;
 
+    MetricRegistry metricRegistry = new MetricRegistry();
+
     private StubHubApiToken accessToken;
     private StubHubEventID eventId1, eventId2, eventId3;
     private Collection<StubHubEvent> eventsToRetrieveListingsFor;
@@ -87,7 +91,8 @@ public class EventListingUpdateControllerImplTest {
 
         activeListingUpdateManager = new EventListingUpdateControllerImpl(activeListingRetriever,
                 listingCollectionFactory, requestTimer, timeoutTimer, threadSleeper, dateTimeFormatter
-                ,MAX_LISTINGS_PER_REQUEST, MAX_REQUESTS_IN_MINUTE, 10, null, null);
+                ,MAX_LISTINGS_PER_REQUEST, MAX_REQUESTS_IN_MINUTE, 10, metricRegistry.histogram("test"),
+                metricRegistry.histogram("test"));
 
         when(event1.getEventID()).thenReturn(eventId1);
         when(event2.getEventID()).thenReturn(eventId2);
@@ -114,9 +119,12 @@ public class EventListingUpdateControllerImplTest {
 
     @Test
     public void shouldUpdateActiveListingsWithTimeout() {
+
+
         activeListingUpdateManager = new EventListingUpdateControllerImpl(activeListingRetriever,
                 listingCollectionFactory, requestTimer, timeoutTimer, threadSleeper, dateTimeFormatter
-                ,MAX_LISTINGS_PER_REQUEST, MAX_REQUESTS_IN_MINUTE, 10, null, null);
+                ,MAX_LISTINGS_PER_REQUEST, MAX_REQUESTS_IN_MINUTE, 10, metricRegistry.histogram("test"),
+                metricRegistry.histogram("test"));
 
         when(event1.getEventID()).thenReturn(eventId1);
         when(event2.getEventID()).thenReturn(eventId2);

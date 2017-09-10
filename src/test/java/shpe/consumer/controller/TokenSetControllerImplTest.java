@@ -23,12 +23,12 @@ import static org.mockito.Mockito.when;
 
 /**
  * @author Jordan Gaston
- * @version 0.1.17
+ * @version 0.1.17 
  */
 @RunWith(MockitoJUnitRunner.class)
 public class TokenSetControllerImplTest {
 
-    private static final String TOKEN_SET_PATH = "../../resources.token-set.ser";
+    private static final String TOKEN_SET_PATH = "src/main/resources/token-set.ser";
     private static final String ACCESS_TOKEN_STRING = "ACCESS_TOKEN";
     private static final String REFRESHED_ACCESS_TOKEN_STRING = "REFRESHED_ACCESS_TOKEN";
     private static final String NEW_ACCESS_TOKEN_STRING = "NEW_ACCESS_TOKEN";
@@ -67,7 +67,8 @@ public class TokenSetControllerImplTest {
     public void testProvideAccessTokenIsSerializedNotExpired() throws IOException {
         when(tokenSetDao.fetchTokenSet(TOKEN_SET_PATH)).thenReturn(tokenSet);
         when(isTokenSetValid.test(tokenSet)).thenReturn(true);
-        assertEquals(tokenSet, accessTokenController.retrieveTokenSet());
+        TokenSet actualResult = accessTokenController.retrieveTokenSet();
+        assertEquals(tokenSet, actualResult);
     }
 
     @Test
