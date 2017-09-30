@@ -49,9 +49,7 @@ public class ConsumerModule extends AbstractModule {
         } catch (IOException ex) {
             //...
         }
-        bind(ConsumerRunnable.class).to(ConsumerRunnable.class);
     }
-
 
     @Provides
     @Singleton
