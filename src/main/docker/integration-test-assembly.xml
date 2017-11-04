@@ -1,0 +1,21 @@
+<assembly>
+    <id>integration-test-assembly</id>
+    <formats>
+        <format>
+            jar
+        </format>
+    </formats>
+    <dependencySet>
+        <include></include>
+        <exlcude></exlcude>
+    </dependencySet>
+    <fileSet>
+        <directory>src/main/java</directory>
+        <exlcude>src/tst?java</exlcude>
+        <outputDirectory></outputDirectory>
+    </fileSet>
+    <fileSet>
+        <directory>src/tst/resources/</directory>
+        <exclude>src/main/resources</exclude>
+    </fileSet>
+</assembly>

@@ -2,6 +2,7 @@ package shpe.consumer.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.joda.time.LocalDateTime;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 @Getter
 @EqualsAndHashCode
+@NoArgsConstructor
 public class StubHubEvent {
 
     private StubHubEventID eventID; //TODO remove this data object
@@ -18,10 +20,6 @@ public class StubHubEvent {
     private StubHubVenue venue;
     private StubHubAncestors ancestor;
     private List<StubHubListingCollection> allEventListings;
-
-    public StubHubEvent(){
-
-    }
 
     public StubHubEvent(final StubHubEventID eventID, final EventStatus eventStatus, final LocalDateTime eventDateUTC, final StubHubVenue venue, final StubHubAncestors ancestor) {
         this.eventID = eventID;
@@ -38,7 +36,7 @@ public class StubHubEvent {
 
     public boolean Equals(Object obj){
         StubHubEvent event = (StubHubEvent) obj;
-        return eventID.equals(event);
+        return eventID.equals(event.getEventID());
     }
 
     public void setEventDateUTC(final LocalDateTime updatedDate){

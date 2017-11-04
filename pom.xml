@@ -15,17 +15,17 @@
                 <version>3.0.1</version>
                 <executions>
                     <execution>
-                        <id>copy-dynamo</id>
+                        <id>integration-testing</id>
                         <goals>
-                            <goal>copy</goal>
+                            <goal>unpack</goal>
                         </goals>
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>com.amazonaws</groupId>
+                                    <groupId>com.jcabi</groupId>
                                     <artifactId>DynamoDBLocal</artifactId>
-                                    <version>1.11.86</version>
-                                    <type>jar</type>
+                                    <version>2015-07-16</version>
+                                    <type>zip</type>
                                     <outputDirectory>${project.build.directory}/dynamo</outputDirectory>
                                     <overWrite>false</overWrite>
                                 </artifactItem>
@@ -35,7 +35,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
+                <groupId>org.apache.maven.plugins</groupId>  
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.6.2</version>
                 <configuration>
@@ -67,6 +67,8 @@
                 <configuration>
                     <systemPropertyVariables>
                         <dynamodb.port>${dynamodbtest.port}</dynamodb.port>
+                        <table.name>Events</table.name>
+                        <event.key.name>eventID</event.key.name>
                     </systemPropertyVariables>
                 </configuration>
                 <version>2.20</version>
@@ -101,6 +103,14 @@
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
                 <version>0.14.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <images>
                         <image>
@@ -111,16 +121,16 @@
                                 <assembly>
                                     <descriptor>integration-test-assembly.xml</descriptor>
                                 </assembly>
-                                <cmd>
-                                    <shell>java -jar
-                                        ${project.build.directory}/${project.artifactId}-${project.version}.jar
-                                    </shell>
-                                </cmd>
                             </build>
                             <run>
                                 <ports>
                                     <port>3000:${dynamodbtest.port}</port>
                                 </ports>
+                                <cmd>
+                                    <shell>java -jar
+                                        ${project.build.directory}/${project.artifactId}-${project.version}.jar
+                                    </shell>
+                                </cmd>
                             </run>
                         </image>
                     </images>
@@ -211,14 +221,13 @@
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
-            <artifactId>DynamoDBLocal</artifactId>
-            <version>[1.11,2.0)</version>
-            <scope>test</scope>
+            <artifactId>aws-java-sdk-dynamodb</artifactId>
+            <version>1.11.66</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-dynamodb</artifactId>
-            <version>1.11.66</version>
+            <artifactId>DynamoDBLocal</artifactId>
+            <version>[1.11,2.0)</version>
         </dependency>
     </dependencies>
     <repositories>

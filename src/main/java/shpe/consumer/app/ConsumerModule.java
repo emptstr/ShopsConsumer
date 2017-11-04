@@ -10,7 +10,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 import org.apache.commons.codec.binary.Base64;
 import shpe.consumer.accessor.*;
 import shpe.consumer.controller.*;
@@ -26,12 +25,13 @@ import shpe.consumer.generator.TokenSetGenerator;
 import shpe.consumer.generator.TokenSetGeneratorImpl;
 import shpe.consumer.model.StubHubApiCredentials;
 import shpe.consumer.predicate.IsTokenSetValidPredicate;
+import shpe.util.configuration.ConfigurationRepositoryFactory;
+import shpe.util.configuration.ConfigurationRepositoryFactory.RuntimeContext;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Properties;
+
+import static shpe.util.configuration.ConfigurationRepositoryFactory.ConfigurationRepository;
 
 /**
  * @author Jordan Gaston
@@ -40,15 +40,17 @@ import java.util.Properties;
 public class ConsumerModule extends AbstractModule {
 
 
-    private final Properties properties = new Properties();
+    private final ConfigurationRepository configurationRepository;
+
+    public ConsumerModule(ConfigurationRepository configurationRepository){
+        this.configurationRepository = configurationRepository;
+    }
+
+    public ConsumerModule(){
+        this.configurationRepository = ConfigurationRepositoryFactory.getConfigurationRepository(RuntimeContext.PROD);
+    }
 
     protected void configure() {
-        try {
-            properties.load(new FileReader("config.properties"));
-            Names.bindProperties(binder(), properties);
-        } catch (IOException ex) {
-            //...
-        }
     }
 
     @Provides
@@ -86,8 +88,8 @@ public class ConsumerModule extends AbstractModule {
     @Singleton
     public StubHubApiCredentials provideCredentials(String consumerSecret, String username,
                                                     String password) {
-        return new StubHubApiCredentials(properties.getProperty("CONSUMER_KEY"), properties.getProperty("CONSUMER_SECRET"),
-                properties.getProperty("USERNAME"), properties.getProperty("PASSWORD"));
+        return new StubHubApiCredentials(configurationRepository.get("CONSUMER_KEY"), configurationRepository.get("CONSUMER_SECRET"),
+                configurationRepository.get("USERNAME"), configurationRepository.get("PASSWORD"));
     }
 
     @Provides
@@ -106,9 +108,9 @@ public class ConsumerModule extends AbstractModule {
     @Provides
     @Singleton
     public EventUpdateController provideEventUpdateController(EventApiAccessor eventRetriever, MetricRegistry metricRegistry) {
-        return new EventUpdateControllerImpl(eventRetriever, Integer.parseInt(properties.getProperty("EVENTS_PER_REQUEST_CONSTRAINT"))
-                , Integer.parseInt(properties.getProperty("REQUESTS_PER_MINUTE_CONSTRAINT")),
-                Integer.parseInt(properties.getProperty("TIMEOUT_DURATION_IN_SECONDS")), metricRegistry);
+        return new EventUpdateControllerImpl(eventRetriever, Integer.parseInt(configurationRepository.get("EVENTS_PER_REQUEST_CONSTRAINT"))
+                , Integer.parseInt(configurationRepository.get("REQUESTS_PER_MINUTE_CONSTRAINT")),
+                Integer.parseInt(configurationRepository.get("TIMEOUT_DURATION_IN_SECONDS")), metricRegistry);
     }
 
     @Provides
@@ -120,9 +122,9 @@ public class ConsumerModule extends AbstractModule {
     @Provides
     @Singleton
     public EventListingUpdateController provideEventListingUpdateController(ListingApiAccessor activeListingRetriever, MetricRegistry metricRegistry) {
-        return new EventListingUpdateControllerImpl(activeListingRetriever, Integer.parseInt(properties.getProperty("LISTINGS_PER_REQUEST_CONSTRAINT")),
-                Integer.parseInt(properties.getProperty("LISTING_REQUESTS_PER_MINUTE_CONSTRAINT")),
-                Integer.parseInt(properties.getProperty("LISTING_TIMEOUT_DURATION_IN_SECONDS")), metricRegistry);
+        return new EventListingUpdateControllerImpl(activeListingRetriever, Integer.parseInt(configurationRepository.get("LISTINGS_PER_REQUEST_CONSTRAINT")),
+                Integer.parseInt(configurationRepository.get("LISTING_REQUESTS_PER_MINUTE_CONSTRAINT")),
+                Integer.parseInt(configurationRepository.get("LISTING_TIMEOUT_DURATION_IN_SECONDS")), metricRegistry);
     }
 
     @Provides
@@ -152,7 +154,7 @@ public class ConsumerModule extends AbstractModule {
     @Provides
     @Singleton
     public AWSCredentials provideAWSCredentials(){
-        return new BasicAWSCredentials(properties.getProperty("AWS_ACCESS_KEY"), properties.getProperty("AWS_SECRET_KEY"));
+        return new BasicAWSCredentials(configurationRepository.get("AWS_ACCESS_KEY"), configurationRepository.get("AWS_SECRET_KEY"));
     }
 
     @Provides
