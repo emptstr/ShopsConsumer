@@ -2,6 +2,7 @@ package shpe.util.configuration;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,9 +18,8 @@ public class ConfigurationRepositoryFactory {
 
     static {
         try {
-            productionProperties.load(new FileInputStream(PRODUCTION_PROPERTIES_PATH));
-            testProperties.load(new FileInputStream(TEST_PROPERTIES_PATH));
-        } catch (IOException e) {
+            productionProperties.load(ClassLoader.getSystemResourceAsStream("config.properties"));
+        } catch (Exception e) {
             throw new RuntimeException("Failed to initialize ConfigurationRepositoryFactory", e);
         }
     }
@@ -70,7 +70,7 @@ public class ConfigurationRepositoryFactory {
         }
     }
 
-    public static enum RuntimeContext {
+    public enum RuntimeContext {
         PROD,
         TEST;
     }

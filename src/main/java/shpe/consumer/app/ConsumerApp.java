@@ -16,9 +16,7 @@ import java.util.logging.Logger;
  */
 @Singleton
 public class ConsumerApp {
-
     private final static Logger logger = Logger.getLogger(ConsumerApp.class.getName());
-
     public static void main(String[] args) {
         Injector injector = Guice.createInjector(new ConsumerModule());
         ConsumerRunnable runner = injector.getInstance(ConsumerRunnable.class);

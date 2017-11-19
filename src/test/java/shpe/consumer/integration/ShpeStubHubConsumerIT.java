@@ -32,20 +32,21 @@ public class ShpeStubHubConsumerIT {
     @Before
     public void setup() {
         Injector injector = Guice.createInjector(new ConsumerModule(ConfigurationRepositoryFactory.getConfigurationRepository(RuntimeContext.TEST)));
-        this.dynamoDB = createDynamoDB(injector);
+//        this.dynamoDB = createDynamoDB(injector);
     }
 
-    @Test(timeout = 10000L)
+    @Test(timeout = 3000000L)
     public void shouldRunApp() throws Exception {
-        while(true) {
-            DescribeTableResult describeTableResult = dynamoDB.describeTable(TABLE_NAME);
-            TableDescription tableDescription = describeTableResult.getTable();
-            long itemCount = tableDescription.getItemCount();
-            if (itemCount > 0L) {
-                return;
-            }
-                Thread.sleep(1000L);
-        }
+        while(true){}
+//        while(true) {
+//            DescribeTableResult describeTableResult = dynamoDB.describeTable(TABLE_NAME);
+//            TableDescription tableDescription = describeTableResult.getTable();
+//            long itemCount = tableDescription.getItemCount();
+//            if (itemCount > 0L) {
+//                return;
+//            }
+//                Thread.sleep(1000L);
+//        }
     }
 
     @After
