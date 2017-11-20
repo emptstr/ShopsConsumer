@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.joda.time.LocalDateTime;
 
+import javax.ws.rs.POST;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -109,6 +110,25 @@ public class StubHubEvent {
 
         private EventStatus(final String name) {
             this.name = name;
+        }
+
+        public static EventStatus get(String name){
+            switch (name.toUpperCase()) {
+                case "ACTIVE":
+                    return Active;
+                case "COMPLETED":
+                    return Completed;
+                case "SCHEDULED":
+                    return Scheduled;
+                case "CONTINGENT":
+                    return Contigent;
+                case "POSTPONED":
+                    return Postponed;
+                case "CANCELLED":
+                    return Cancelled;
+                default:
+                    throw new RuntimeException(String.format("Invalid status passed: %s", name));
+            }
         }
     }
 }

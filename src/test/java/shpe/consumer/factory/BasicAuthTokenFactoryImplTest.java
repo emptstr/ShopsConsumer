@@ -34,4 +34,8 @@ public class BasicAuthTokenFactoryImplTest {
         assertEquals(basicAuthToken, EXPECTED_AUTH_TOKEN);
     }
 
+    @Test
+    public void authTokenTest(){
+    }
+
 }

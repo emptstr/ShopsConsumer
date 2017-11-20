@@ -3,16 +3,23 @@ package shpe.consumer.dao;
 import shpe.consumer.model.TokenSet;
 
 import java.io.*;
+import java.util.Optional;
 
 public class TokenSetDaoImpl extends TokenSetDao {
     @Override
-    public TokenSet fetchTokenSet(String tokenSetKey) {
+    public Optional<TokenSet> fetchTokenSet(String tokenSetKey) {
+
         File tokenSetFile = new File(tokenSetKey);
-        try (ObjectInputStream tokenSetStream = new ObjectInputStream(new FileInputStream(tokenSetFile))) {
-            return (TokenSet) tokenSetStream.readObject();
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("Failed while reading token set at location: %s", tokenSetKey), e);
+
+        if(tokenSetFile.exists()) {
+            try (ObjectInputStream tokenSetStream = new ObjectInputStream(new FileInputStream(tokenSetFile))) {
+                TokenSet tokenSet = (TokenSet) tokenSetStream.readObject();
+                return Optional.of(tokenSet);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Failed while reading token set at location: %s", tokenSetKey), e);
+            }
         }
+        return Optional.empty();
     }
 
     @Override

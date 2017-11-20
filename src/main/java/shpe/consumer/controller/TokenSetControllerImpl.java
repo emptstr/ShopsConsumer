@@ -6,13 +6,14 @@ import shpe.consumer.generator.TokenSetGenerator;
 import shpe.consumer.model.TokenSet;
 import shpe.consumer.predicate.IsTokenSetValidPredicate;
 
+import java.util.Optional;
 import java.util.logging.Logger;
 
 @RequiredArgsConstructor
 public class TokenSetControllerImpl extends TokenSetController {
 
     private static final Logger logger = Logger.getLogger(TokenSetControllerImpl.class.getName());
-    private static final String TOKEN_SET_PATH = "src/main/resources/token-set.ser";
+    private static final String TOKEN_SET_PATH = "/token-set.ser";
 
     private final TokenSetDao tokenDao;
     private final TokenSetRefreshController accessTokenRefreshController;
@@ -26,14 +27,17 @@ public class TokenSetControllerImpl extends TokenSetController {
 
     private TokenSet retrieveValidTokenSet() {
         logger.info("Started retrieving token set...");
-        TokenSet serializedAccessToken = tokenDao.fetchTokenSet(TOKEN_SET_PATH);
-        if (serializedAccessToken == null) {
-            return createAccessTokenForTheFirstTime();
-        } else if (!isTokenSetValidPredicate.test(serializedAccessToken)) {
-            serializedAccessToken = refreshExpiredAccessToken(serializedAccessToken);
+        Optional<TokenSet> tokenSetOptional = tokenDao.fetchTokenSet(TOKEN_SET_PATH);
+        if (tokenSetOptional.isPresent()) {
+            TokenSet tokenSet = tokenSetOptional.get();
+            if (!isTokenSetValidPredicate.test(tokenSet)) {
+               tokenSet =  refreshExpiredAccessToken(tokenSet);
+            }
+            logger.info("Finished retrieving token set.");
+            return tokenSet;
         }
         logger.info("Finished retrieving token set.");
-        return serializedAccessToken;
+        return createAccessTokenForTheFirstTime();
     }
 
 

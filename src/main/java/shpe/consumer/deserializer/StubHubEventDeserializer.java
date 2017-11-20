@@ -7,6 +7,7 @@ import shpe.consumer.model.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static shpe.consumer.model.StubHubEvent.*;
 import static shpe.consumer.model.StubHubEvent.StubHubAncestors.*;
@@ -48,7 +49,7 @@ public class StubHubEventDeserializer implements JsonDeserializer<StubHubEvent[]
 
     private StubHubEvent jsonToEvent(final JsonObject jsonEvent) {
         StubHubEventID eventID = new StubHubEventID(jsonEvent.get(ID).getAsString());
-        EventStatus eventStatus = EventStatus.valueOf(jsonEvent.get(STATUS).getAsString());
+        EventStatus eventStatus = EventStatus.get(jsonEvent.get(STATUS).getAsString());
         LocalDateTime eventDateUTC = new LocalDateTime(jsonEvent.get(EVENT_DATE).getAsString().split("\\+")[0]); // trimming the access off the original date format (ex. 2017-08-07T23:05:00+0000 -> 2017-08-07T23:05:00)
         StubHubVenue venue = jsonToVenue(jsonEvent.get(VENUE).getAsJsonObject());
         StubHubAncestors ancestors = jsonToAncestors(jsonEvent.get(ANCESTORS).getAsJsonObject());
@@ -65,9 +66,22 @@ public class StubHubEventDeserializer implements JsonDeserializer<StubHubEvent[]
     }
 
     private StubHubAncestors jsonToAncestors(JsonObject jsonAncestors) {
+
+            int count  = 0;
+        for (Map.Entry<String, JsonElement> jsonElementEntry : jsonAncestors.entrySet()) {
+            if(jsonElementEntry.getKey().equals(PERFORMERS)){
+               count++;
+            }
+        }
+        if(count != jsonAncestors.entrySet().size()){
+            throw new RuntimeException("PINEAPPLE");
+        }
+
+
+        final JsonArray jsonPerformers = jsonAncestors.get(PERFORMERS).getAsJsonArray();
         final JsonArray jsonCategories = jsonAncestors.get(CATEGORIES).getAsJsonArray();
         final JsonArray jsonGroupings = jsonAncestors.get(GROUPINGS).getAsJsonArray();
-        final JsonArray jsonPerformers = jsonAncestors.get(PERFORMERS).getAsJsonArray();
+
 
         List<StubHubEvent.StubHubAncestors.StubHubCategory> categories = new ArrayList<>(jsonCategories.size());
         List<StubHubEvent.StubHubAncestors.StubHubGrouping> groupings = new ArrayList<>(jsonGroupings.size());

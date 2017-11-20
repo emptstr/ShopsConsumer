@@ -1,11 +1,17 @@
 package shpe.consumer.accessor;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import shpe.consumer.accessor.LoginApiAccessorImpl;
+import shpe.consumer.deserializer.LoginApiResultDeserializer;
 import shpe.consumer.factory.BasicAuthTokenFactory;
 import shpe.consumer.factory.StringEntityFactory;
 import shpe.consumer.model.StubHubApiCredentials;
@@ -31,6 +37,13 @@ public class LoginApiAccessorImplTest {
     private static final String AUTH_HEADER_PREFIX = "Basic %s";
     private static final String LOGIN_BODY_FORMAT_STRING = "grant_type=password&username=%s&password=%s&scope=%s";
     private static final String REFRESH_BODY_FORMAT_STRING = "grant_type=refresh_token&refresh_token=%s";
+    private static final String TO_BE_DESERIALIZED = "{\n" +
+            "    \"access_token\": \"accesstoken\",\n" +
+            "    \"refresh_token\": \"refreshtoken\",\n" +
+            "    \"scope\": \"default\",\n" +
+            "    \"token_type\": \"Bearer\",\n" +
+            "    \"expires_in\": 1\n" +
+            "}";
 
     @Mock
     private Client client;
@@ -58,7 +71,9 @@ public class LoginApiAccessorImplTest {
     public void setUp() {
         credentials = new StubHubApiCredentials("consumerkey", "consumersecret", "username", "password");
         loginResult = new StubHubApiLoginResult("accesstoken", "refreshtoken", 1);
-        loginManager = new LoginApiAccessorImpl( credentials, client, authTokenGenerator, entityFactory);
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.registerTypeAdapter(StubHubApiLoginResult.class, new LoginApiResultDeserializer()).create();
+        loginManager = new LoginApiAccessorImpl( credentials, client, authTokenGenerator, entityFactory, gson);
     }
 
     @Test
@@ -69,7 +84,7 @@ public class LoginApiAccessorImplTest {
         String bodyString = String.format(LOGIN_BODY_FORMAT_STRING, "username", "password", "PROD");
         when(entityFactory.getEntity(bodyString, MediaType.APPLICATION_FORM_URLENCODED)).thenReturn(entity);
         when(requestBuilder.buildPost(entity)).thenReturn(loginInvocation);
-        when(loginInvocation.invoke(StubHubApiLoginResult.class)).thenReturn(loginResult);
+        when(loginInvocation.invoke(String.class)).thenReturn(TO_BE_DESERIALIZED);
 
         StubHubApiLoginResult actualLoginResult = loginManager.login();
 
@@ -89,7 +104,7 @@ public class LoginApiAccessorImplTest {
         String bodyString = String.format(REFRESH_BODY_FORMAT_STRING, "refreshtoken");
         when(entityFactory.getEntity(bodyString, MediaType.APPLICATION_FORM_URLENCODED)).thenReturn(entity);
         when(requestBuilder.buildPost(entity)).thenReturn(loginInvocation);
-        when(loginInvocation.invoke(StubHubApiLoginResult.class)).thenReturn(loginResult);
+        when(loginInvocation.invoke(String.class)).thenReturn(TO_BE_DESERIALIZED);
 
         StubHubApiLoginResult actualLoginResult = loginManager.refresh(new StubHubApiToken("refreshtoken", org.joda.time.LocalDateTime.now()));
 

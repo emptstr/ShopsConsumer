@@ -7,6 +7,7 @@ import shpe.consumer.model.StubHubApiToken;
 import shpe.consumer.model.TokenSet;
 
 import java.io.*;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 
@@ -31,8 +32,6 @@ public class TokenSetDaoImplTest {
 
     @Test
     public void  shouldSerializeTokenSet() throws Exception {
-
-
         tokenSetDao.persistTokenSet(tokenSetKey, tokenToBeSaved);
 
         File tokenSetFile = new File(tokenSetKey);
@@ -48,9 +47,9 @@ public class TokenSetDaoImplTest {
         ObjectOutputStream tokenSetStream = new ObjectOutputStream(new FileOutputStream(tokenSetFile));
         tokenSetStream.writeObject(tokenToBeSaved);
 
-        TokenSet actualTokenSet = tokenSetDao.fetchTokenSet(tokenSetKey);
+        Optional<TokenSet> actualTokenSet = tokenSetDao.fetchTokenSet(tokenSetKey);
 
-        assertEquals(tokenToBeSaved, actualTokenSet);
+        assertEquals(tokenToBeSaved, actualTokenSet.get());
     }
 
 }

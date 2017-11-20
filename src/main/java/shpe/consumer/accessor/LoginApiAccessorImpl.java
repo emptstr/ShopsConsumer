@@ -1,5 +1,6 @@
 package shpe.consumer.accessor;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import shpe.consumer.factory.BasicAuthTokenFactory;
 import shpe.consumer.factory.EntityFactory;
@@ -24,38 +25,50 @@ public class LoginApiAccessorImpl implements LoginApiAccessor {
     private final BasicAuthTokenFactory authTokenGenerator;
     private final StubHubApiCredentials credentials;
     private final EntityFactory<String> entityFactory;
+    private final Gson gson;
 
     @Inject
     public LoginApiAccessorImpl(StubHubApiCredentials credentials, Client client,
-                                BasicAuthTokenFactory authTokenGenerator, EntityFactory<String> entityFactory) {
+                                BasicAuthTokenFactory authTokenGenerator, EntityFactory<String> entityFactory, Gson gson) {
         this.credentials = credentials;
         this.client = client;
         this.authTokenGenerator = authTokenGenerator;
         this.entityFactory = entityFactory;
+        this.gson = gson;
     }
 
     public StubHubApiLoginResult login() {
-        WebTarget loginTarget = client.target(TARGET);
-        Invocation.Builder loginRequestBuilder = loginTarget.request();
-        loginRequestBuilder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-        String basicAuthToken = authTokenGenerator.generate(credentials.getConsumerKey(), credentials.getConsumerSecret());
-        loginRequestBuilder.header(HttpHeaders.AUTHORIZATION, String.format(AUTH_HEADER_PREFIX, basicAuthToken));
-        String bodyString = String.format(LOGIN_BODY_FORMAT_STRING, credentials.getUsername(),
-                credentials.getPassword(), "PROD");
-        Invocation loginInvocation = loginRequestBuilder.buildPost(entityFactory.getEntity(bodyString,
-                MediaType.APPLICATION_FORM_URLENCODED));
-        return loginInvocation.invoke(StubHubApiLoginResult.class);
+        try {
+            WebTarget loginTarget = client.target(TARGET);
+            Invocation.Builder loginRequestBuilder = loginTarget.request();
+            loginRequestBuilder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+            String basicAuthToken = authTokenGenerator.generate(credentials.getConsumerKey(), credentials.getConsumerSecret());
+            loginRequestBuilder.header(HttpHeaders.AUTHORIZATION, String.format(AUTH_HEADER_PREFIX, basicAuthToken));
+            String bodyString = String.format(LOGIN_BODY_FORMAT_STRING, credentials.getUsername(),
+                    credentials.getPassword(), "PROD");
+            Invocation loginInvocation = loginRequestBuilder.buildPost(entityFactory.getEntity(bodyString,
+                    MediaType.APPLICATION_FORM_URLENCODED));
+            return gson.fromJson(loginInvocation.invoke(String.class), StubHubApiLoginResult.class);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Failed while attempting to login to account at: %s ensure that " +
+                    "the consumer key, consumer secret, username, and password are correct", TARGET), e);
+        }
     }
 
     public StubHubApiLoginResult refresh(StubHubApiToken refreshToken) {
-        WebTarget loginTarget = client.target(TARGET);
-        Invocation.Builder loginRequestBuilder = loginTarget.request();
-        loginRequestBuilder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-        String basicAuthToken = authTokenGenerator.generate(credentials.getConsumerKey(), credentials.getConsumerSecret());
-        loginRequestBuilder.header(HttpHeaders.AUTHORIZATION, String.format(AUTH_HEADER_PREFIX, basicAuthToken));
-        String bodyString = String.format(REFRESH_BODY_FORMAT_STRING, refreshToken.getTokenString());
-        Invocation loginInvocation = loginRequestBuilder.buildPost(entityFactory.getEntity(bodyString,
-                MediaType.APPLICATION_FORM_URLENCODED));
-        return loginInvocation.invoke(StubHubApiLoginResult.class);
+        try {
+            WebTarget loginTarget = client.target(TARGET);
+            Invocation.Builder loginRequestBuilder = loginTarget.request();
+            loginRequestBuilder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+            String basicAuthToken = authTokenGenerator.generate(credentials.getConsumerKey(), credentials.getConsumerSecret());
+            loginRequestBuilder.header(HttpHeaders.AUTHORIZATION, String.format(AUTH_HEADER_PREFIX, basicAuthToken));
+            String bodyString = String.format(REFRESH_BODY_FORMAT_STRING, refreshToken.getTokenString());
+            Invocation loginInvocation = loginRequestBuilder.buildPost(entityFactory.getEntity(bodyString,
+                    MediaType.APPLICATION_FORM_URLENCODED));
+            return gson.fromJson(loginInvocation.invoke(String.class), StubHubApiLoginResult.class);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Failed while refreshing access token at endpoint: %s ensure that " +
+                    "the consumer key, consumer secret, username, and password are correct", TARGET), e);
+        }
     }
 }

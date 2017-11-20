@@ -15,6 +15,8 @@ public class TokenSetGeneratorImpl extends TokenSetGenerator {
     private final TokenSetFactory tokenSetFactory;
     private final LoginApiAccessor loginManager;
 
+    //TODO integration test
+
     @Override
     public TokenSet generateNewTokenSet() {
         logger.info("creating tokens");

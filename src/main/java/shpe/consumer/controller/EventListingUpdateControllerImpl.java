@@ -118,8 +118,8 @@ public class EventListingUpdateControllerImpl extends EventListingUpdateControll
             return retrievedListings;
         } catch (Exception e) {
             String failureString = String.format("Failed while retrieving listings at row: &d," +
-                            " while a max request size of: %d, for event: %s", requestRowStart,
-                    maxListingsPerRequest, stubHubEvent.getEventID().getEventID());
+                            " while a max request size of: %d, for event: %s trace: %s", requestRowStart,
+                    maxListingsPerRequest, stubHubEvent.getEventID().getEventID(), e.getMessage());
             logger.warn(failureString);
             requestFailureRatioMetric.update(1);
         }

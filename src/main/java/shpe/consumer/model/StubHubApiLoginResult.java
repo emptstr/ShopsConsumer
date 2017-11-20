@@ -1,8 +1,11 @@
 package shpe.consumer.model;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * Created by jordan on 6/13/17.
  */
+@EqualsAndHashCode
 public class StubHubApiLoginResult {
 
     private final String accessTokenString;

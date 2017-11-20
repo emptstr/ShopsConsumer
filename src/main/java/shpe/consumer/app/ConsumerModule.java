@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.codahale.metrics.MetricRegistry;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -17,6 +18,7 @@ import shpe.consumer.dao.AttributeUpdateFactory;
 import shpe.consumer.dao.StubHubDynamoDbEventDao;
 import shpe.consumer.dao.StubHubEventDao;
 import shpe.consumer.dao.TokenSetDaoImpl;
+import shpe.consumer.deserializer.LoginApiResultDeserializer;
 import shpe.consumer.deserializer.StubHubEventDeserializer;
 import shpe.consumer.deserializer.StubHubListingDeserializer;
 import shpe.consumer.factory.BasicAuthTokenFactoryImpl;
@@ -24,6 +26,7 @@ import shpe.consumer.factory.StringEntityFactory;
 import shpe.consumer.generator.TokenSetGenerator;
 import shpe.consumer.generator.TokenSetGeneratorImpl;
 import shpe.consumer.model.StubHubApiCredentials;
+import shpe.consumer.model.StubHubApiLoginResult;
 import shpe.consumer.predicate.IsTokenSetValidPredicate;
 import shpe.util.configuration.ConfigurationRepositoryFactory;
 import shpe.util.configuration.ConfigurationRepositoryFactory.RuntimeContext;
@@ -81,7 +84,9 @@ public class ConsumerModule extends AbstractModule {
     @Provides
     @Singleton
     public LoginApiAccessor provideLoginApiAccessor(StubHubApiCredentials credentials, Client client) {
-        return new LoginApiAccessorImpl(credentials, client, new BasicAuthTokenFactoryImpl(new Base64()), new StringEntityFactory());
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.registerTypeAdapter(StubHubApiLoginResult.class, new LoginApiResultDeserializer()).create();
+        return new LoginApiAccessorImpl(credentials, client, new BasicAuthTokenFactoryImpl(new Base64()), new StringEntityFactory(), gson);
     }
 
     @Provides

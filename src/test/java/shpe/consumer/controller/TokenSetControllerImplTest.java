@@ -16,6 +16,7 @@ import shpe.consumer.model.TokenSet;
 import shpe.consumer.predicate.IsTokenSetValidPredicate;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class TokenSetControllerImplTest {
 
-    private static final String TOKEN_SET_PATH = "src/main/resources/token-set.ser";
+    private static final String TOKEN_SET_PATH = "/token-set.ser";
     private static final String ACCESS_TOKEN_STRING = "ACCESS_TOKEN";
     private static final String REFRESHED_ACCESS_TOKEN_STRING = "REFRESHED_ACCESS_TOKEN";
     private static final String NEW_ACCESS_TOKEN_STRING = "NEW_ACCESS_TOKEN";
@@ -65,7 +66,7 @@ public class TokenSetControllerImplTest {
 
     @Test
     public void testProvideAccessTokenIsSerializedNotExpired() throws IOException {
-        when(tokenSetDao.fetchTokenSet(TOKEN_SET_PATH)).thenReturn(tokenSet);
+        when(tokenSetDao.fetchTokenSet(TOKEN_SET_PATH)).thenReturn(Optional.of(tokenSet));
         when(isTokenSetValid.test(tokenSet)).thenReturn(true);
         TokenSet actualResult = accessTokenController.retrieveTokenSet();
         assertEquals(tokenSet, actualResult);
@@ -73,7 +74,7 @@ public class TokenSetControllerImplTest {
 
     @Test
     public void testProvideAccessTokenIsSerializedIsExpired() throws Exception {
-        when(tokenSetDao.fetchTokenSet(TOKEN_SET_PATH)).thenReturn(tokenSet);
+        when(tokenSetDao.fetchTokenSet(TOKEN_SET_PATH)).thenReturn(Optional.of(tokenSet));
         when(isTokenSetValid.test(tokenSet)).thenReturn(false);
         when(tokenSetRefreshController.refreshExpiredTokenSet(tokenSet)).thenReturn(refreshedTokenSet);
         assertEquals(refreshedTokenSet, accessTokenController.retrieveTokenSet());
@@ -82,7 +83,7 @@ public class TokenSetControllerImplTest {
 
     @Test
     public void testProvideAccessTokenDoesNotExist() throws Exception {
-        when(tokenSetDao.fetchTokenSet(TOKEN_SET_PATH)).thenReturn(null);
+        when(tokenSetDao.fetchTokenSet(TOKEN_SET_PATH)).thenReturn(Optional.empty());
         when(tokenSetGenerator.generateNewTokenSet()).thenReturn(newTokenSet);
         assertEquals(newTokenSet, accessTokenController.retrieveTokenSet());
         verify(tokenSetDao).persistTokenSet(TOKEN_SET_PATH, newTokenSet);

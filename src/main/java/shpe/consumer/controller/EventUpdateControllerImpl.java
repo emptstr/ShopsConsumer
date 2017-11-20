@@ -8,14 +8,13 @@ import org.slf4j.LoggerFactory;
 import shpe.consumer.accessor.EventApiAccessor;
 import shpe.consumer.model.StubHubApiToken;
 import shpe.consumer.model.StubHubEvent;
+import shpe.helpers.StackTraceHelper;
 import shpe.util.Sleeper;
 import shpe.util.SleeperImpl;
 import shpe.util.Timer;
 import shpe.util.TimerImpl;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Optional;
+import java.util.*;
 
 @RequiredArgsConstructor
 public class EventUpdateControllerImpl extends EventUpdateController {
@@ -95,7 +94,7 @@ public class EventUpdateControllerImpl extends EventUpdateController {
           requestFailureRatioMetric.update(0);
           return events;
         }catch(Exception e){
-            logger.warn(String.format("Request failed at row :%d ",requestRowStart));
+            logger.warn(String.format("Request failed at row :%d trace: \n%s", requestRowStart,e.getClass().getName() + "\n" + StackTraceHelper.getAsFormattedString(e.getStackTrace())));
             requestFailureRatioMetric.update(1);
             // fail silently
         }
